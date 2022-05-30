@@ -72,6 +72,7 @@ import software.amazon.smithy.typescript.codegen.CodegenUtils;
 import software.amazon.smithy.typescript.codegen.FrameworkErrorModel;
 import software.amazon.smithy.typescript.codegen.TypeScriptDependency;
 import software.amazon.smithy.typescript.codegen.TypeScriptWriter;
+import software.amazon.smithy.utils.CaseUtils;
 import software.amazon.smithy.utils.ListUtils;
 import software.amazon.smithy.utils.OptionalUtils;
 import software.amazon.smithy.utils.SetUtils;
@@ -2028,7 +2029,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                     StructureShape target = model.expectShape(outputId).asStructureShape().get();
                     new TreeMap<>(target.getAllMembers())
                             .forEach((memberName, memberShape) -> writer.write(
-                                    "$L: undefined,", memberName));
+                                    "$L: undefined,", CaseUtils.toCamelCase(memberName)));
                 });
             });
             readResponseHeaders(context, operation, bindingIndex, "output");
