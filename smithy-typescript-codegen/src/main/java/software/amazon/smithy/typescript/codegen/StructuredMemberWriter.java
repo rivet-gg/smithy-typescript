@@ -46,7 +46,6 @@ import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.Trait;
 import software.amazon.smithy.model.traits.UniqueItemsTrait;
 import software.amazon.smithy.utils.SmithyInternalApi;
-import software.amazon.smithy.utils.CaseUtils;
 
 /**
  * Generates objects, interfaces, enums, etc.
@@ -271,7 +270,7 @@ final class StructuredMemberWriter {
      * @return Returns the member name to be used in generation.
      */
     private String getSanitizedMemberName(MemberShape member) {
-        return CaseUtils.toCamelCase(TypeScriptUtils.sanitizePropertyName(symbolProvider.toMemberName(member)));
+        return TypeScriptUtils.sanitizePropertyName(symbolProvider.toMemberName(member));
     }
 
     /**

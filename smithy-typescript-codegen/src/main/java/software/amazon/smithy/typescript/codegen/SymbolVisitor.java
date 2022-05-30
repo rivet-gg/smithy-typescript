@@ -65,6 +65,7 @@ import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.EnumTrait;
 import software.amazon.smithy.model.traits.MediaTypeTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
+import software.amazon.smithy.utils.CaseUtils;
 import software.amazon.smithy.utils.SmithyInternalApi;
 import software.amazon.smithy.utils.StringUtils;
 
@@ -75,7 +76,7 @@ import software.amazon.smithy.utils.StringUtils;
  * prefixed with "_". See "reserved-words.txt" for the list of words.
  */
 @SmithyInternalApi
-final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
+public class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     static final String IMPLEMENTS_INTERFACE_PROPERTY = "implementsInterface";
     private static final Logger LOGGER = Logger.getLogger(SymbolVisitor.class.getName());
@@ -86,7 +87,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     private final Set<StructureShape> errorShapes = new HashSet<>();
     private final ModuleNameDelegator moduleNameDelegator;
 
-    SymbolVisitor(Model model, TypeScriptSettings settings) {
+    public SymbolVisitor(Model model, TypeScriptSettings settings) {
         this(model, settings, ModuleNameDelegator.DEFAULT_CHUNK_SIZE);
     }
 
@@ -132,7 +133,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public String toMemberName(MemberShape shape) {
-        return escaper.escapeMemberName(shape.getMemberName());
+        return CaseUtils.toCamelCase(escaper.escapeMemberName(shape.getMemberName()));
     }
 
     @Override

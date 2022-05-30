@@ -57,39 +57,39 @@ public class UnionGeneratorTest {
 
         // It generates an unknown variant
         assertThat(output, containsString("export interface $UnknownMember {\n"
-                                          + "    A?: never;\n"
-                                          + "    B?: never;\n"
-                                          + "    C?: never;\n"
+                                          + "    a?: never;\n"
+                                          + "    b?: never;\n"
+                                          + "    c?: never;\n"
                                           + "    $unknown: [string, any];\n"
                                           + "  }"));
 
         // It generates a variant for each member.
         assertThat(output, containsString("export interface AMember {\n"
-                                          + "    A: string;\n"
-                                          + "    B?: never;\n"
-                                          + "    C?: never;\n"
+                                          + "    a: string;\n"
+                                          + "    b?: never;\n"
+                                          + "    c?: never;\n"
                                           + "    $unknown?: never;\n"
                                           + "  }"));
 
         assertThat(output, containsString("export interface BMember {\n"
-                                          + "    A?: never;\n"
-                                          + "    B: number;\n"
-                                          + "    C?: never;\n"
+                                          + "    a?: never;\n"
+                                          + "    b: number;\n"
+                                          + "    c?: never;\n"
                                           + "    $unknown?: never;\n"
                                           + "  }"));
 
         assertThat(output, containsString("export interface CMember {\n"
-                                          + "    A?: never;\n"
-                                          + "    B?: never;\n"
-                                          + "    C: boolean;\n"
+                                          + "    a?: never;\n"
+                                          + "    b?: never;\n"
+                                          + "    c: boolean;\n"
                                           + "    $unknown?: never;\n"
                                           + "  }"));
 
         // It generates a visitor type.
         assertThat(output, containsString("export interface Visitor<T> {\n"
-                                          + "    A: (value: string) => T;\n"
-                                          + "    B: (value: number) => T;\n"
-                                          + "    C: (value: boolean) => T;\n"
+                                          + "    a: (value: string) => T;\n"
+                                          + "    b: (value: number) => T;\n"
+                                          + "    c: (value: boolean) => T;\n"
                                           + "    _: (name: string, value: any) => T;\n"
                                           + "  }"));
 
@@ -98,9 +98,9 @@ public class UnionGeneratorTest {
                                           + "    value: Example,\n"
                                           + "    visitor: Visitor<T>\n"
                                           + "  ): T => {\n"
-                                          + "    if (value.A !== undefined) return visitor.A(value.A);\n"
-                                          + "    if (value.B !== undefined) return visitor.B(value.B);\n"
-                                          + "    if (value.C !== undefined) return visitor.C(value.C);\n"
+                                          + "    if (value.a !== undefined) return visitor.a(value.a);\n"
+                                          + "    if (value.b !== undefined) return visitor.b(value.b);\n"
+                                          + "    if (value.c !== undefined) return visitor.c(value.c);\n"
                                           + "    return visitor._(value.$unknown[0], value.$unknown[1]);\n"
                                           + "  }"));
     }

@@ -723,7 +723,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 String labelValue = getInputValue(context, binding.getLocation(), "input." + memberName,
                         binding.getMember(), target);
                 // Get the correct label to use.
-                Segment uriLabel = uriLabels.stream().filter(s -> s.getContent().equals(memberName)).findFirst().get();
+                Segment uriLabel = uriLabels.stream().filter(s -> s.getContent().equals(CaseUtils.toSnakeCase(memberName))).findFirst().get();
                 writer.addImport("extendedEncodeURIComponent", "__extendedEncodeURIComponent",
                         "@aws-sdk/smithy-client");
                 String encodedSegment = uriLabel.isGreedyLabel()
@@ -1539,7 +1539,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                     Symbol eventSymbol = symbolProvider.toSymbol(target);
                     String eventSerMethodName =
                             ProtocolGenerator.getSerFunctionName(eventSymbol, protocolName) + "_event";
-                    writer.write("$L: value => $L(value, context),", memberName, eventSerMethodName);
+                    writer.write("$L: value => $L(value, context),", CaseUtils.toCamelCase(memberName), eventSerMethodName);
                 });
 
                 // Handle the unknown property.
@@ -1668,7 +1668,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                     StructureShape target = model.expectShape(shapeId).asStructureShape().get();
                     new TreeMap<>(target.getAllMembers())
                             .forEach((memberName, memberShape) -> writer.write(
-                                    "$L: undefined,", memberName));
+                                    "$L: undefined,", CaseUtils.toCamelCase(memberName)));
                 });
             });
             readQueryString(context, operation, bindingIndex);
@@ -2459,13 +2459,13 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 StructureShape target = model.expectShape(member.getTarget(), StructureShape.class);
                 // Prepare event for generating event deserializers.
                 deserializingEventShapes.add(target);
-                writer.openBlock("if (output[$S] !== undefined) {", "}", name, () -> {
+                writer.openBlock("if (output[$S] !== undefined) {", "}", CaseUtils.toCamelCase(name), () -> {
                     writer.openBlock("return {", "};", () -> {
                         // Dispatch to special event deserialize function
                         Symbol eventSymbol = symbolProvider.toSymbol(target);
                         String eventDeserMethodName =
                                 ProtocolGenerator.getDeserFunctionName(eventSymbol, protocolName) + "_event";
-                        writer.write("$1L: await $2L(output[$1S], context)", name, eventDeserMethodName);
+                        writer.write("$1L: await $2L(output[$1S], context)", CaseUtils.toCamelCase(name), eventDeserMethodName);
                     });
                 });
             });

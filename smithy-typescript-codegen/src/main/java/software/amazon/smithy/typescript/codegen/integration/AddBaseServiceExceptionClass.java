@@ -22,9 +22,11 @@ import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.typescript.codegen.CodegenUtils;
+import software.amazon.smithy.typescript.codegen.SymbolVisitor;
 import software.amazon.smithy.typescript.codegen.TypeScriptDependency;
 import software.amazon.smithy.typescript.codegen.TypeScriptSettings;
 import software.amazon.smithy.typescript.codegen.TypeScriptWriter;
@@ -94,34 +96,37 @@ public final class AddBaseServiceExceptionClass implements TypeScriptIntegration
             TypeScriptSettings settings,
             SymbolProvider symbolProvider
     ) {
-        return shape -> {
-            Symbol symbol = symbolProvider.toSymbol(shape);
-            if (shape.hasTrait(ErrorTrait.class)) {
-                String serviceName = getServiceName(settings, model, symbolProvider);
-                String baseExceptionAlias = "__BaseException";
-                SymbolReference reference;
-                if (settings.generateClient()) {
-                    String serviceExceptionName = getServiceExceptionName(serviceName);
-                    String namespace = Paths.get(".", "src", "models", serviceExceptionName).toString();
-                    Symbol serviceExceptionSymbol = Symbol.builder()
-                            .name(serviceExceptionName)
-                            .namespace(namespace, "/")
-                            .definitionFile(namespace + ".ts").build();
-                    reference = SymbolReference.builder()
-                            .options(SymbolReference.ContextOption.USE)
-                            .alias(baseExceptionAlias)
-                            .symbol(serviceExceptionSymbol)
-                            .build();
-                } else {
-                    reference = SymbolReference.builder()
-                            .options(SymbolReference.ContextOption.USE)
-                            .alias(baseExceptionAlias)
-                            .symbol(TypeScriptDependency.SERVER_COMMON.createSymbol("ServiceException"))
-                            .build();
+        return new SymbolVisitor(model, settings) {
+            @Override
+            public Symbol toSymbol(Shape shape) {
+                Symbol symbol = symbolProvider.toSymbol(shape);
+                if (shape.hasTrait(ErrorTrait.class)) {
+                    String serviceName = getServiceName(settings, model, symbolProvider);
+                    String baseExceptionAlias = "__BaseException";
+                    SymbolReference reference;
+                    if (settings.generateClient()) {
+                        String serviceExceptionName = getServiceExceptionName(serviceName);
+                        String namespace = Paths.get(".", "src", "models", serviceExceptionName).toString();
+                        Symbol serviceExceptionSymbol = Symbol.builder()
+                                .name(serviceExceptionName)
+                                .namespace(namespace, "/")
+                                .definitionFile(namespace + ".ts").build();
+                        reference = SymbolReference.builder()
+                                .options(SymbolReference.ContextOption.USE)
+                                .alias(baseExceptionAlias)
+                                .symbol(serviceExceptionSymbol)
+                                .build();
+                    } else {
+                        reference = SymbolReference.builder()
+                                .options(SymbolReference.ContextOption.USE)
+                                .alias(baseExceptionAlias)
+                                .symbol(TypeScriptDependency.SERVER_COMMON.createSymbol("ServiceException"))
+                                .build();
+                    }
+                    return symbol.toBuilder().addReference(reference).build();
                 }
-                return symbol.toBuilder().addReference(reference).build();
+                return symbol;
             }
-            return symbol;
         };
     }
 
