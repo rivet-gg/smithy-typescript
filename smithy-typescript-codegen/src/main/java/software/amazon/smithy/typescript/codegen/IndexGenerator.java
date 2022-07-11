@@ -58,8 +58,11 @@ final class IndexGenerator {
             writer.write("export * from \"./server/index\";");
         }
 
-        // write export statement for models
+        // Write export statement for models
         writer.write("export * from \"./models\";");
+
+        // Write export statement for common lib
+        writer.write("export * as common from \"@rivet-gg/common\";");
 
         // Write each custom export.
         for (TypeScriptIntegration integration : integrations) {

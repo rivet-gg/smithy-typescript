@@ -33,6 +33,7 @@ import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.typescript.codegen.integration.RuntimeClientPlugin;
 import software.amazon.smithy.typescript.codegen.integration.TypeScriptIntegration;
+import software.amazon.smithy.utils.CaseUtils;
 import software.amazon.smithy.utils.OptionalUtils;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -264,6 +265,9 @@ final class ServiceBareBonesClientGenerator implements Runnable {
                     + "trait of an operation.");
             writer.write("disableHostPrefix?: boolean;\n");
 
+            writer.writeDocs("Bearer token for auth.");
+            writer.write("token?: string;\n");
+
             // Write custom configuration dependencies.
             for (TypeScriptIntegration integration : integrations) {
                 integration.addConfigInterfaceFields(settings, model, symbolProvider, writer);
@@ -301,6 +305,29 @@ final class ServiceBareBonesClientGenerator implements Runnable {
 
     private void generateConstructor() {
         writer.openBlock("constructor(configuration: $L) {", "}", configType, () -> {
+            writer.addImport("middleware", "__middleware", "@rivet-gg/common");
+
+            String apiUrl = "RIVET_" + CaseUtils.toSnakeCase(
+                symbolProvider.toSymbol(service).getName().replace("ServiceClient", "")
+            ).toUpperCase()
+            + "_API_URL";
+
+            writer.writeDocs("Default endpoint value");
+            writer.write("// @ts-ignore");
+            writer.openBlock("if(typeof process !== \"undefined\" && !configuration.hasOwnProperty(\"endpoint\")) {", "}", () -> {
+                writer.write("// @ts-ignore");
+                writer.write("configuration.endpoint = process.env.$L;", apiUrl);
+            });
+
+            writer.writeDocs("Default request handler value");
+            writer.openBlock("if(!configuration.hasOwnProperty(\"requestHandlerMiddleware\")) {", "}\n", () -> {
+                writer.write("// @ts-ignore");
+                writer.write("if(typeof window !== \"undefined\")\n"
+                        + "configuration.endpoint = __middleware.browser.requestHandlerMiddleware(configuration.token);");
+                writer.write("else\n"
+                        + "configuration.endpoint = __middleware.nodejs.requestHandlerMiddleware(configuration.token);");
+            });
+
             // Hook for adding/changing the client constructor.
             writer.pushState(CLIENT_CONSTRUCTOR_SECTION);
 
