@@ -154,9 +154,12 @@ final class ServiceBareBonesClientGenerator implements Runnable {
 
         generateClientDefaults();
 
+        // MARK make `endpoint` optional
+        writer.write("type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>");
+
         // The default configuration type is always just the base-level
         // Smithy configuration requirements.
-        writer.write("type $LType = Partial<__SmithyConfiguration<$T>>", configType,
+        writer.write("type $LType = PartialBy<Partial<__SmithyConfiguration<$T>>", configType,
                 applicationProtocol.getOptionsType());
         writer.write("  & ClientDefaults");
 
@@ -173,14 +176,11 @@ final class ServiceBareBonesClientGenerator implements Runnable {
                 writer.write("& $T", symbolReference);
             }
 
-            // MARK: Make `endpoint` optional
-            writer.addImport("Endpoint", "__Endpoint", "@aws-sdk/types");
-            writer.addImport("Provider", "__Provider", "@aws-sdk/types");
-            writer.write("// Make `endpoint` optional");
-            writer.write("& { endpoint?: string | __Endpoint | __Provider<__Endpoint> }");
-
             writer.dedent();
         }
+
+        // Close `PartialBy`
+        writer.write(", \"endpoint\">");
 
         writer.writeDocs(String.format("The configuration interface of %s class constructor that set the region, "
                 + "credentials and other options.", symbol.getName()));
@@ -320,13 +320,6 @@ final class ServiceBareBonesClientGenerator implements Runnable {
             ).toUpperCase()
             + "_API_URL";
 
-            writer.writeDocs("Default endpoint value");
-            writer.write("// @ts-ignore");
-            writer.openBlock("if(typeof process !== \"undefined\" && !configuration.hasOwnProperty(\"endpoint\")) {", "}", () -> {
-                writer.write("// @ts-ignore");
-                writer.write("configuration.endpoint = process.env.$L;", apiUrl);
-            });
-
             writer.writeDocs("Default request handler value");
             writer.openBlock("if(!configuration.hasOwnProperty(\"requestHandlerMiddleware\")) {", "}\n", () -> {
                 writer.write("// @ts-ignore");
@@ -336,9 +329,16 @@ final class ServiceBareBonesClientGenerator implements Runnable {
                         + "configuration.requestHandler = __middleware.nodejs.requestHandlerMiddleware(configuration.token);");
             });
 
-            writer.writeDocs("Token parser");
-            writer.openBlock("function rivetConfig<T>(input: T & ClientDefaults): T & { token: string } {", "}\n", () -> {
-                writer.write("return Object.assign(Object.assign({}, input), {token: input.token ?? null});");
+            writer.addImport("Endpoint", "__Endpoint", "@aws-sdk/types");
+            writer.addImport("Provider", "__Provider", "@aws-sdk/types");
+            writer.writeDocs("Endpoint and token parser");
+            writer.openBlock("function rivetConfig<T>(input: T & ClientDefaults): T & { \n"
+                    + "endpoint: string | __Endpoint | __Provider<__Endpoint>, token: string \n} {", "}\n", () -> {
+                writer.openBlock("return Object.assign(Object.assign({}, input), {", "});", () -> {
+                    writer.write("// @ts-ignore");
+                    writer.write("endpoint: configuration.endpoint ?? process.env.RIVET_PORTAL_API_URL ?? \"\",");
+                    writer.write("token: input.token ?? null,");
+                });
             });
 
             // Hook for adding/changing the client constructor.
