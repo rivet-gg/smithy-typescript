@@ -172,6 +172,13 @@ final class ServiceBareBonesClientGenerator implements Runnable {
             for (SymbolReference symbolReference : inputTypes) {
                 writer.write("& $T", symbolReference);
             }
+
+            // MARK: Make `endpoint` optional
+            writer.addImport("Endpoint", "__Endpoint", "@aws-sdk/types");
+            writer.addImport("Provider", "__Provider", "@aws-sdk/types");
+            writer.write("// Make `endpoint` optional");
+            writer.write("& { endpoint?: string | __Endpoint | __Provider<__Endpoint> }");
+
             writer.dedent();
         }
 
@@ -305,6 +312,7 @@ final class ServiceBareBonesClientGenerator implements Runnable {
 
     private void generateConstructor() {
         writer.openBlock("constructor(configuration: $L) {", "}", configType, () -> {
+            // MARK: Rivet default config
             writer.addImport("middleware", "__middleware", "@rivet-gg/common");
 
             String apiUrl = "RIVET_" + CaseUtils.toSnakeCase(
@@ -323,9 +331,14 @@ final class ServiceBareBonesClientGenerator implements Runnable {
             writer.openBlock("if(!configuration.hasOwnProperty(\"requestHandlerMiddleware\")) {", "}\n", () -> {
                 writer.write("// @ts-ignore");
                 writer.write("if(typeof window !== \"undefined\")\n"
-                        + "configuration.endpoint = __middleware.browser.requestHandlerMiddleware(configuration.token);");
+                        + "configuration.requestHandler = __middleware.browser.requestHandlerMiddleware(configuration.token);");
                 writer.write("else\n"
-                        + "configuration.endpoint = __middleware.nodejs.requestHandlerMiddleware(configuration.token);");
+                        + "configuration.requestHandler = __middleware.nodejs.requestHandlerMiddleware(configuration.token);");
+            });
+
+            writer.writeDocs("Token parser");
+            writer.openBlock("function rivetConfig<T>(input: T & ClientDefaults): T & { token: string } {", "}\n", () -> {
+                writer.write("return Object.assign(Object.assign({}, input), {token: input.token ?? null});");
             });
 
             // Hook for adding/changing the client constructor.
@@ -334,6 +347,11 @@ final class ServiceBareBonesClientGenerator implements Runnable {
             int configVariable = 0;
             writer.write("let $L = __getRuntimeConfig(configuration);",
                     generateConfigVariable(configVariable));
+
+            configVariable++;
+            writer.write("let $L = rivetConfig($L);",
+                    generateConfigVariable(configVariable),
+                    generateConfigVariable(configVariable - 1));
 
             // Add runtime plugin "resolve" method calls. These are invoked one
             // after the other until all of the runtime plugins have been called.
