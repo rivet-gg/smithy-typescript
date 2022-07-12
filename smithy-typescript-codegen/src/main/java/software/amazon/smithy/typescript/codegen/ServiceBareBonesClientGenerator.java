@@ -336,7 +336,8 @@ final class ServiceBareBonesClientGenerator implements Runnable {
                     + "endpoint: string | __Endpoint | __Provider<__Endpoint>, token: string \n} {", "}\n", () -> {
                 writer.openBlock("return Object.assign(Object.assign({}, input), {", "});", () -> {
                     writer.write("// @ts-ignore");
-                    writer.write("endpoint: configuration.endpoint ?? process.env.RIVET_PORTAL_API_URL ?? \"\",");
+                    writer.write("endpoint: configuration.endpoint ?? typeof process !== \"undefined\" ?\n"
+                            + "(process.env.RIVET_PORTAL_API_URL ?? \"\") : \"\",");
                     writer.write("token: input.token ?? null,");
                 });
             });
