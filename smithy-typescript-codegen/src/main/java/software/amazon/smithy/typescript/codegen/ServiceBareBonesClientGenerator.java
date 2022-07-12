@@ -321,7 +321,7 @@ final class ServiceBareBonesClientGenerator implements Runnable {
             + "_API_URL";
 
             writer.writeDocs("Default request handler value");
-            writer.openBlock("if(!configuration.hasOwnProperty(\"requestHandlerMiddleware\")) {", "}\n", () -> {
+            writer.openBlock("if(!configuration.hasOwnProperty(\"requestHandler\")) {", "}\n", () -> {
                 writer.write("// @ts-ignore");
                 writer.write("if(typeof window !== \"undefined\")\n"
                         + "configuration.requestHandler = __middleware.browser.requestHandlerMiddleware(configuration.token);");
