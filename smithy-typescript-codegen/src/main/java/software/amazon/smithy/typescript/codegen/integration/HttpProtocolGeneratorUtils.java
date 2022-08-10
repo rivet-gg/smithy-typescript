@@ -76,8 +76,8 @@ public final class HttpProtocolGeneratorUtils {
     ) {
         switch (format) {
             case DATE_TIME:
-                // Use the split to not serialize milliseconds.
-                return "(" + dataSource + ".toISOString().split('.')[0]+\"Z\")";
+                // We serialize milliseconds.
+                return dataSource + ".toISOString()";
             case EPOCH_SECONDS:
                 return "Math.round(" + dataSource + ".getTime() / 1000)";
             case HTTP_DATE:
