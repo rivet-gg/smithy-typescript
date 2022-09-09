@@ -18,6 +18,7 @@ package software.amazon.smithy.typescript.codegen;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -315,10 +316,14 @@ final class ServiceBareBonesClientGenerator implements Runnable {
             // MARK: Rivet default config
             writer.addImport("middleware", "__middleware", "@rivet-gg/common");
 
-            String apiUrl = "RIVET_" + CaseUtils.toSnakeCase(
+            String apiEnvKey = "RIVET_" + CaseUtils.toSnakeCase(
                 symbolProvider.toSymbol(service).getName().replace("ServiceClient", "")
-            ).toUpperCase()
+            ).toUpperCase(Locale.US)
             + "_API_URL";
+            String apiUrl = "https://" + CaseUtils.toSnakeCase(
+                symbolProvider.toSymbol(service).getName().replace("ServiceClient", "")
+            ).replace("_", "-")
+            + ".api.rivet.gg/v1";
 
             writer.writeDocs("Default request handler value");
             writer.openBlock("if(!configuration.hasOwnProperty(\"requestHandler\")) {", "}\n", () -> {
@@ -337,7 +342,7 @@ final class ServiceBareBonesClientGenerator implements Runnable {
                 writer.openBlock("return Object.assign(Object.assign({}, input), {", "});", () -> {
                     writer.write("// @ts-ignore");
                     writer.write("endpoint: configuration.endpoint ?? (typeof process !== \"undefined\" ?\n"
-                            + "(process.env.$L ?? \"\") : \"\"),", apiUrl);
+                            + "(process.env.$L ?? null) : null) ?? \"$L\",", apiEnvKey, apiUrl);
                     writer.write("token: input.token ?? null,");
                 });
             });
