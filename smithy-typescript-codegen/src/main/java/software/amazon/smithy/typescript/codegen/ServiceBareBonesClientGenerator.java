@@ -339,10 +339,19 @@ final class ServiceBareBonesClientGenerator implements Runnable {
             writer.writeDocs("Endpoint and token parser");
             writer.openBlock("function rivetConfig<T>(input: T & ClientDefaults): T & { \n"
                     + "endpoint: string | __Endpoint | __Provider<__Endpoint>, token: string \n} {", "}\n", () -> {
+                writer.write("let endpoint = configuration.endpoint ?? null;");
+                writer.openBlock("if (endpoint === null) {", "}", () -> {
+                    writer.openBlock("try {", "}", () -> {
+                        writer.write("endpoint = process.env.$L ?? null;", apiEnvKey);
+                    });
+                    writer.openBlock("catch(_e) {", "}", () -> { });
+                    writer.openBlock("if (endpoint === null) {", "}", () -> {
+                        writer.write("endpoint = \"$L\";", apiUrl);
+                    });
+                });
                 writer.openBlock("return Object.assign(Object.assign({}, input), {", "});", () -> {
                     writer.write("// @ts-ignore");
-                    writer.write("endpoint: configuration.endpoint ?? (typeof process !== \"undefined\" ?\n"
-                            + "(process.env.$L ?? null) : null) ?? \"$L\",", apiEnvKey, apiUrl);
+                    writer.write("endpoint,");
                     writer.write("token: input.token ?? null,");
                 });
             });
