@@ -345,7 +345,7 @@ final class ServiceBareBonesClientGenerator implements Runnable {
                     writer.openBlock("try {", "}", () -> {
                         writer.write("endpoint = process.env.$L ?? null;", apiEnvKey);
                     });
-                    writer.openBlock("catch(_e) {", "}", () -> { });
+                    writer.openBlock("catch {", "}", () -> { });
                     writer.openBlock("if (endpoint === null) {", "}", () -> {
                         writer.write("endpoint = \"$L\";", apiUrl);
                     });
@@ -355,7 +355,7 @@ final class ServiceBareBonesClientGenerator implements Runnable {
                     writer.openBlock("try {", "}", () -> {
                         writer.write("token = process.env.$L ?? process.env.RIVET_TOKEN ?? null;", tokenEnvKey);
                     });
-                    writer.openBlock("catch(_e) {", "}", () -> { });
+                    writer.openBlock("catch {", "}", () -> { });
                 });
                 writer.openBlock("return Object.assign(Object.assign({}, input), {", "});", () -> {
                     writer.write("// @ts-ignore");
