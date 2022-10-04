@@ -329,12 +329,6 @@ final class ServiceBareBonesClientGenerator implements Runnable {
             ).replace("_", "-")
             + ".api.rivet.gg/v1";
 
-            writer.writeDocs("Default request handler value");
-            writer.openBlock("if(!configuration.hasOwnProperty(\"requestHandler\")) {", "}\n", () -> {
-                writer.write("// @ts-ignore");
-                writer.write("configuration.requestHandler = __middleware.requestHandlerMiddleware(configuration.token);");
-            });
-
             writer.addImport("Endpoint", "__Endpoint", "@aws-sdk/types");
             writer.addImport("Provider", "__Provider", "@aws-sdk/types");
             writer.writeDocs("Endpoint and token parser");
@@ -375,6 +369,15 @@ final class ServiceBareBonesClientGenerator implements Runnable {
             writer.write("let $L = rivetConfig($L);",
                     generateConfigVariable(configVariable),
                     generateConfigVariable(configVariable - 1));
+
+            final int configVariable2 = configVariable;
+            writer.writeDocs("Default request handler value");
+            writer.openBlock("if(!configuration.hasOwnProperty(\"requestHandler\")) {", "}\n", () -> {
+
+                writer.write("// @ts-ignore");
+                writer.write("$L.requestHandler = __middleware.requestHandlerMiddleware($L.token);",
+                    generateConfigVariable(configVariable2), generateConfigVariable(configVariable2));
+            });
 
             // Add runtime plugin "resolve" method calls. These are invoked one
             // after the other until all of the runtime plugins have been called.
