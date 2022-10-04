@@ -320,6 +320,10 @@ final class ServiceBareBonesClientGenerator implements Runnable {
                 symbolProvider.toSymbol(service).getName().replace("ServiceClient", "")
             ).toUpperCase(Locale.US)
             + "_API_URL";
+            String tokenEnvKey = "RIVET_" + CaseUtils.toSnakeCase(
+                symbolProvider.toSymbol(service).getName().replace("ServiceClient", "")
+            ).toUpperCase(Locale.US)
+            + "_TOKEN";
             String apiUrl = "https://" + CaseUtils.toSnakeCase(
                 symbolProvider.toSymbol(service).getName().replace("ServiceClient", "")
             ).replace("_", "-")
@@ -328,10 +332,7 @@ final class ServiceBareBonesClientGenerator implements Runnable {
             writer.writeDocs("Default request handler value");
             writer.openBlock("if(!configuration.hasOwnProperty(\"requestHandler\")) {", "}\n", () -> {
                 writer.write("// @ts-ignore");
-                writer.write("if(typeof window !== \"undefined\")\n"
-                        + "configuration.requestHandler = __middleware.browser.requestHandlerMiddleware(configuration.token);");
-                writer.write("else\n"
-                        + "configuration.requestHandler = __middleware.nodejs.requestHandlerMiddleware(configuration.token);");
+                writer.write("configuration.requestHandler = __middleware.requestHandlerMiddleware(configuration.token);");
             });
 
             writer.addImport("Endpoint", "__Endpoint", "@aws-sdk/types");
@@ -349,10 +350,17 @@ final class ServiceBareBonesClientGenerator implements Runnable {
                         writer.write("endpoint = \"$L\";", apiUrl);
                     });
                 });
+                writer.write("let token = input.token ?? null;");
+                writer.openBlock("if (token === null) {", "}", () -> {
+                    writer.openBlock("try {", "}", () -> {
+                        writer.write("token = process.env.$L ?? process.env.RIVET_TOKEN ?? null;", tokenEnvKey);
+                    });
+                    writer.openBlock("catch(_e) {", "}", () -> { });
+                });
                 writer.openBlock("return Object.assign(Object.assign({}, input), {", "});", () -> {
                     writer.write("// @ts-ignore");
                     writer.write("endpoint,");
-                    writer.write("token: input.token ?? null,");
+                    writer.write("token,");
                 });
             });
 
